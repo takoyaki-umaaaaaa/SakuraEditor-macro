@@ -2,46 +2,53 @@
 // 英字フォント変換マクロ
 // 選択範囲の英字を指定したフォントに変換
 //
-// ※注意1	「Double Struck capital」は大文字の "CHNPQRZ" を変換できない。
+// ※注意1	『ASCII英字 ➫ 修飾英字』の変換のみ。逆はできない。
+// ※注意2	「Double Struck capital」は大文字の "CHNPQRZ" を変換できない。
 //			Wordやメモ帳に貼りつけると出るが……
-// ※注意2	メニューを出したままでいると「マクロ実行中…」のDialogが表示される。
+// ※注意3	メニューを出したままでいると「マクロ実行中…」のDialogが表示される。
 //			これはsakura editorのマクロ無限ループ対策によるもの。
 //			[キャンセル]押下かメニュー選択で消去が可能。
 //
-//	2022/07/19	Ver.1.0.0
+//	2022/07/30	Ver.1.0.2	構造体追加のみで変換の種類を増やせるように構造修正
 //	2022/07/29	Ver.1.0.1	Bold sans-serif追加
+//	2022/07/19	Ver.1.0.0
 // *************************************************************************
 
 
 try {
 	// 1. 𝐁𝐨𝐥𝐝 𝐒𝐞𝐫𝐢𝐟
 	var bSerif = {};
-	bSerif.AZ  = [0xd835, 0xdbbf];
-	bSerif.az  = [0xd835, 0xdbb9];
-	bSerif.n09 = [0xd835, 0xdf9e];
+	bSerif.fontname = new String('𝐁𝐨𝐥𝐝 𝐒𝐞𝐫𝐢𝐟');
+	bSerif.AZ  = [0xd835, 0xdc00 - 0x41];
+	bSerif.az  = [0xd835, 0xdc1a - 0x61];
+	bSerif.n09 = [0xd835, 0xdfce - 0x30];
 	bSerif.SP  = null;
 	// 2. 𝗕𝗼𝗹𝗱 𝗦𝗮𝗻𝘀-𝘀𝗲𝗿𝗶𝗳
 	var bSansserif = {};
-	bSansserif.AZ  = [0xd835, 0xddd4-0x41];
-	bSansserif.az  = [0xd835, 0xddee-0x61];
-	bSansserif.n09 = [0xd835, 0xdfec-0x30];
+	bSansserif.fontname = new String('𝗕𝗼𝗹𝗱 𝗦𝗮𝗻𝘀-𝘀𝗲𝗿𝗶𝗳');
+	bSansserif.AZ  = [0xd835, 0xddd4 - 0x41];
+	bSansserif.az  = [0xd835, 0xddee - 0x61];
+	bSansserif.n09 = [0xd835, 0xdfec - 0x30];
 	bSansserif.SP  = null;
 	// 3. 𝕭𝖔𝖑𝖉 𝕱𝖗𝖆𝖐𝖙𝖚𝖗
 	var bFraktur = {};
-	bFraktur.AZ  = [0xd835, 0xdd2b];
-	bFraktur.az  = [0xd835, 0xdd25];
+	bFraktur.fontname = new String('𝕭𝖔𝖑𝖉 𝕱𝖗𝖆𝖐𝖙𝖚𝖗');
+	bFraktur.AZ  = [0xd835, 0xdd6c - 0x41];
+	bFraktur.az  = [0xd835, 0xdd86 - 0x61];
 	bFraktur.n09 = null;	// 割り当て無し
 	bFraktur.SP  = null;
 	// 4. 𝔻𝕠𝕦𝕓𝕝𝕖 𝕊𝕥𝕣𝕦𝕔𝕜 𝕔𝕒𝕡𝕚𝕥𝕒𝕝	※注意：大文字の CHNPQRZ はサクラエディタでは表示できません
 	var dStruckCapital = {};
-	dStruckCapital.AZ  = [0xd835, 0xdcf7];
-	dStruckCapital.az  = [0xd835, 0xdcf1];
-	dStruckCapital.n09 = [0xd835, 0xdfa8];
+	dStruckCapital.fontname = new String('𝔻𝕠𝕦𝕓𝕝𝕖 𝕊𝕥𝕣𝕦𝕔𝕜 𝕔𝕒𝕡𝕚𝕥𝕒');
+	dStruckCapital.AZ  = [0xd835, 0xdd38 - 0x41];
+	dStruckCapital.az  = [0xd835, 0xdd52 - 0x61];
+	dStruckCapital.n09 = [0xd835, 0xdfd8 - 0x30];
 	dStruckCapital.SP  = { C: 0x2102, H: 0x210D, N: 0x2115, P: 0x2119, Q: 0x211A, R: 0x211D, Z: 0x2124 };
 	// 5. 𝓑𝓸𝓵𝓭 𝓢𝓬𝓻𝓲𝓹𝓽
 	var bScript = {};
-	bScript.AZ  = [0xd835, 0xdcd0-0x41];
-	bScript.az  = [0xd835, 0xdcea-0x61];
+	bScript.fontname = new String('𝓑𝓸𝓵𝓭 𝓢𝓬𝓻𝓲𝓹𝓽');
+	bScript.AZ  = [0xd835, 0xdcd0 - 0x41];
+	bScript.az  = [0xd835, 0xdcea - 0x61];
 	bScript.n09 = null;
 	bScript.SP  = null;
 
@@ -49,7 +56,10 @@ try {
 	var fontarr = new Array(dummy, bSerif, bSansserif, bFraktur, dStruckCapital, bScript);
 
 	// Font選択メニュー
-	var menustr = "𝐁𝐨𝐥𝐝 𝐒𝐞𝐫𝐢𝐟,𝗕𝗼𝗹𝗱 𝗦𝗮𝗻𝘀-𝘀𝗲𝗿𝗶𝗳,𝕭𝖔𝖑𝖉 𝕱𝖗𝖆𝖐𝖙𝖚𝖗,𝔻𝕠𝕦𝕓𝕝𝕖 𝕊𝕥𝕣𝕦𝕔𝕜 𝕔𝕒𝕡𝕚𝕥𝕒𝕝, 𝓑𝓸𝓵𝓭 𝓢𝓬𝓻𝓲𝓹𝓽";
+	var menustr = "";
+	for(var i=1; i < fontarr.length; i++){
+		menustr += fontarr[i].fontname + ",";	// 最後の","はサクラエディタがいい感じにエラー処理すると信じて
+	}
 
 	// 変換対象を選択済みかチェック
 	var selectedStr = Editor.GetSelectedString(0);
