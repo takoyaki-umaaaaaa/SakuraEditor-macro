@@ -9,6 +9,7 @@
 //			これはsakura editorのマクロ無限ループ対策によるもの。
 //			[キャンセル]押下かメニュー選択で消去が可能。
 //
+//	2022/07/31	Ver.1.0.3	囲み文字を追加
 //	2022/07/30	Ver.1.0.2	構造体追加のみで変換の種類を増やせるように構造修正
 //	2022/07/29	Ver.1.0.1	Bold sans-serif追加
 //	2022/07/19	Ver.1.0.0
@@ -51,9 +52,31 @@ try {
 	bScript.az  = [0xd835, 0xdcea - 0x61];
 	bScript.n09 = null;
 	bScript.SP  = null;
+	// 🆂🆀🆄🅰🆁🅴 🅱🅾🆇
+	var squareBoxB = {};
+	squareBoxB.fontname = new String('🆂🆀🆄🅰🆁🅴 🅱🅾🆇');
+	squareBoxB.AZ  = [0xd83c, 0xdd70 - 0x41];
+	squareBoxB.az  = [0xd83c, 0xdd70 - 0x61];	// 大文字のみ
+	squareBoxB.n09 = null;
+	squareBoxB.SP  = null;
+	// 🅂🅀🅄🄰🅁🄴 🄱🄾🅇
+	var squareBoxW = {};
+	squareBoxW.fontname = new String('🅂🅀🅄🄰🅁🄴 🄱🄾🅇');
+	squareBoxW.AZ  = [0xd83c, 0xdd30 - 0x41];
+	squareBoxW.az  = [0xd83c, 0xdd30 - 0x61];
+	squareBoxW.n09 = null;
+	squareBoxW.SP  = null;
+	// 🅒🅔🅡🅒🅛🅔
+	var cercleB = {};
+	cercleB.fontname = new String('🅒🅔🅡🅒🅛🅔');
+	cercleB.AZ  = [0xd83c, 0xdd50 - 0x41];
+	cercleB.az  = [0xd83c, 0xdd50 - 0x61];
+	cercleB.n09 = [0x0000, 0x2789 - 0x30];
+	cercleB.SP  = {0: 0x24ff};
+
 
 	var dummy = null;
-	var fontarr = new Array(dummy, bSerif, bSansserif, bFraktur, dStruckCapital, bScript);
+	var fontarr = new Array(dummy, bSerif, bSansserif, bFraktur, dStruckCapital, bScript, squareBoxB, squareBoxW, cercleB);
 
 	// Font選択メニュー
 	var menustr = "";
@@ -91,7 +114,7 @@ function convToNewFont( str, diff ){
 	// 特殊変換文字
 	var conv0 = str;
 	if( diff.SP != null )
-		conv0 = str.replace( /[A-Za-z]/g, function(c){
+		conv0 = str.replace( /[A-Za-z0-9]/g, function(c){
 			if( c in diff.SP )	// 変数c内の文字が、連想配列のkeyとして存在するか
 				return String.fromCharCode(diff.SP[c]);	// サロゲートペアではない
 			else
@@ -113,7 +136,9 @@ function convToNewFont( str, diff ){
 	var conv3 = conv2;
 	if( diff.n09 != null )
 		conv3 = conv2.replace( /[0-9]/g, function(c){
-			return String.fromCharCode(diff.n09[0], c.charCodeAt(0) + diff.n09[1]);
+			return (diff.n09[0]===0) ?  
+				String.fromCharCode(c.charCodeAt(0) + diff.n09[1]) : 
+				String.fromCharCode(diff.n09[0], c.charCodeAt(0) + diff.n09[1]);
 		});
 	return conv3;
 }
