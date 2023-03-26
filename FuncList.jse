@@ -1,0 +1,105 @@
+// Ｃ言語ソースファイルから定義関数リストを作成し、クリップボードにコピー
+
+// 使い方
+// 1. このスクリプトファイルにソースファイルを直接ドロップ（複数ファイル可）
+// 2. クリップボードにコピーされるため、出力したい場所で[Ctrl]+[V]
+
+
+// ※正規表現で抽出しているため、下記のケースは関数が検出されない
+// 　・関数定義の最初に空白文字がある
+// 　・1行で完結している(';'がある行はマッチしない)
+//		例：int sample(int para){return para*2;}
+
+
+// JScript リファレンス
+// https://learn.microsoft.com/ja-jp/previous-versions/windows/scripting/cc364460(v=msdn.10)
+// https://learn.microsoft.com/ja-jp/previous-versions/windows/scripting/cc409859(v=msdn.10)
+
+
+// テキストファイル読み込み
+// 戻り値：	正常 …… string 読み込んだテキスト
+//			異常 …… null
+function LoadTextFile(
+	filepath	// string フルパス
+){
+	var fsObject = new ActiveXObject("Scripting.FileSystemObject");
+	if( !fsObject.FileExists(filepath) ){
+		alert("対象ファイル(" + filepath + ")が見つかりません。");
+		fsObject = null;			// 参照削除(解放) 
+		return;
+	}
+
+	var streamtxt = fsObject.OpenTextFile(
+								filepath, 			// 読み込み対象ファイル
+								1,					// Read Only
+								false,				// ファイルが無い場合に作成しない
+								-2);				// OS標準形式で開く
+	var contents = streamtxt.ReadAll();
+	streamtxt.Close();
+	fsObject = null;				// 参照削除(解放) 
+
+	return contents;
+}
+
+
+
+
+// 関数名抽出用正規表現
+function getFunclist(
+	txtSrc
+){
+// ^[_a-zA-Z][^\(=;:]*[\t ]+\**[_a-zA-Z][_a-zA-Z0-9]*\([^;]*$
+	var regex = new RegExp(/^[_a-zA-Z][^\(=;:]*[\t \n]+\**[_a-zA-Z][_a-zA-Z0-9]*\([^;]*$/gm);
+//						^^^^^^^^^^^^^^^^^^^            ￣ ^^^^^^^^^^^^^^^^^^^^^^￣^^^^^^
+//							戻り値定義				ポインタ		関数名	  小括弧 セミコロン直前まで
+	
+	var res, strfunc, strlist = "";
+	while( res = regex.exec(txtSrc) ){
+		strfunc = res[0].replace(/\r\n|\t/gm, " ");		// 結果を1行にする
+		strfunc = strfunc.replace(/{.*$/g, "");			// '{'以降を削除
+
+		// 整形処理
+		strfunc = strfunc.replace(/\s*,\s*/g,	",");	// カンマ前後の空白を削除
+		strfunc = strfunc.replace(/\s*\(\s*/g,	"(");
+		strfunc = strfunc.replace(/\s*\)\s*/g,	")");
+		strfunc = strfunc.replace(/ +/g,		" ");	// 連続する空白を1文字に
+		
+		strlist += strfunc + "\n";
+	}
+
+	return strlist;
+}
+
+// Clipboardにテキストをコピー
+// ※ %windir%\system32\clip.exe を使うため、一瞬DOS窓が表示される
+function setClip(str){
+	var clip = WScript.CreateObject('WScript.Shell').Exec('clip');
+	clip.StdIn.Write(str);
+	clip.StdIn.Close();
+	WScript.Sleep(50);
+}
+
+
+
+
+
+
+
+
+// ******* Start of main processing ******
+
+if( WScript.Arguments.length == 0 ){
+	WScript.Echo( "読み込み対象ファイルが指定されていません。\r\nスクリプトファイルにテキストファイルをドロップして起動してください。" );
+	WScript.Quit(-1);
+}
+
+var srcpath = "", code = "", list = "";
+for( var cnt=0; cnt < WScript.Arguments.length; cnt++ ){
+	srcpath = WScript.Arguments( cnt );
+	code = LoadTextFile( srcpath );
+	list += getFunclist( code );
+//	WScript.Echo(list);
+}
+
+setClip( list );
+WScript.Echo("クリップボードに関数リストをコピーしました。");
