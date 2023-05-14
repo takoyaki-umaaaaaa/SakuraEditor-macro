@@ -9,15 +9,23 @@ try{
 		throw e;
 	}
 
-	
-	// \ ➔ \\	： /\\/g, '\\\\'
-	// \ ➔ /	： /\\/g, '/'
-	// \\ ➔ \	： /\\\\/g, '\\'
-	// / ➔ \\	： /\/g, '\\\\'
-	selectedStr = selectedStr.replace( /\\/g, '\\\\' );
+	// 0:	\ ➔ \\	： /\\/g, '\\\\'
+	// 1:	\ ➔ /	： /\\/g, '/'
+	// 2:	\\ ➔ \	： /\\\\/g, '\\'
+	// 3:	/ ➔ \	： /\//g, '\\'
+	var menustr = "\\ ➔ \\\\, \\ ➔ /, \\\\ ➔ \\, / ➔ \\";
+	var searchstr = [/\\/g, /\\/g, /\\\\/g, /\//g];
+	var replacestr = ['\\\\', '/', '\\', '\\'];
 
-	// 文書に出力
-	Editor.InsText( selectedStr );
+	// Menu表示と置き換え
+	var disppos = 1;									// Menuの表示位置。0:mouse位置に表示, 1:cursor位置に表示
+	var item = Editor.CreateMenu( disppos, menustr );	// 戻り値は1始まり。0はキャンセル
+	if( (0+1) <= item&&item <= (3+1) ){
+		selectedStr = selectedStr.replace( searchstr[item - 1], replacestr[item - 1] );
+
+		// 文書に出力
+		Editor.InsText( selectedStr );
+	}
 }
 catch( e ) {
 	Editor.InfoMsg( e.description );
